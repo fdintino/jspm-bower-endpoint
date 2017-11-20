@@ -65,6 +65,11 @@ BowerEndpoint.prototype.locate = function (packageName){
         if(packageName != repositoryPackageName)
           return { redirect: endpoint + ':' + repositoryPackageName };
 
+        var splits = repositoryPackageName.split('/');
+        if (splits.length == 2) {
+            return { redirect: endpoint + ':' + splits[1] };
+        }
+
         if(
           ConcreteResolver === resolvers.GitRemote ||
           ConcreteResolver === resolvers.GitHub ||
