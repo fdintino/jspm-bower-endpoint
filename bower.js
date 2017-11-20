@@ -21,10 +21,10 @@ var BowerEndpoint = module.exports = function BowerEndpoint (options, ui) {
     this._api = options.apiVersion;
     this._version = options.versionString;
 
-	this._bower = {
-		config: bowerConfig({}),
-		logger: new bowerLogger()
-	};
+  this._bower = {
+    config: bowerConfig({}),
+    logger: new bowerLogger()
+  };
 
     this._bower.config.tmp = path.resolve( this._tmp, 'tmp');
     this._bower.config.storage.packages = path.resolve( this._tmp, 'packages');
@@ -33,145 +33,145 @@ var BowerEndpoint = module.exports = function BowerEndpoint (options, ui) {
     this._bower.config.storage.registry = path.resolve( this._tmp, 'registry');
     this._bower.config.storage.empty = path.resolve( this._tmp, 'empty');
 
-	this._repository = new PackageRepository(this._bower.config, this._bower.logger);
+  this._repository = new PackageRepository(this._bower.config, this._bower.logger);
 
-	this._bower.logger.intercept(function(log){
+  this._bower.logger.intercept(function(log){
 
-		if(log.level === 'info')
-			ui.log(
-				log.level,
-				ui.format.info(
-					'- ' + log.data.endpoint.name + ' ' + log.id + ': ' + log.message
-				)
-			);
+    if(log.level === 'info')
+      ui.log(
+        log.level,
+        ui.format.info(
+          '- ' + log.data.endpoint.name + ' ' + log.id + ': ' + log.message
+        )
+      );
 
-	});
+  });
 };
 
 
 
 BowerEndpoint.prototype.locate = function (packageName){
 
-	var fail = { notfound: true };
-	var repository = this._repository;
-	var endpoint = this._endpoint
+  var fail = { notfound: true };
+  var repository = this._repository;
+  var endpoint = this._endpoint
 
-	return Q.Promise(function(resolve){
+  return Q.Promise(function(resolve){
 
-		repository.resolve(packageName)
-			.spread(function(ConcreteResolver, source, repositoryPackageName) {
+    repository.resolve(packageName)
+      .spread(function(ConcreteResolver, source, repositoryPackageName) {
 
 
-				if(packageName != repositoryPackageName)
-					return { redirect: endpoint + ':' + repositoryPackageName };
+        if(packageName != repositoryPackageName)
+          return { redirect: endpoint + ':' + repositoryPackageName };
 
-				if(
-					ConcreteResolver === resolvers.GitRemote ||
-					ConcreteResolver === resolvers.GitHub ||
-					ConcreteResolver === resolvers.Fs
-				)
-					return undefined;
+        if(
+          ConcreteResolver === resolvers.GitRemote ||
+          ConcreteResolver === resolvers.GitHub ||
+          ConcreteResolver === resolvers.Fs
+        )
+          return undefined;
 
-				return fail;
-			})
-			.then(resolve)
-			.catch(function(){
-				resolve( fail );
-			});
-	});
+        return fail;
+      })
+      .then(resolve)
+      .catch(function(){
+        resolve( fail );
+      });
+  });
 }
 
 BowerEndpoint.prototype.lookup = function (packageName){
 
 
-	var fail = { notfound: true };
-	var noVersioned = { versions : { latest: { hash: 'latest' } } };
-	var repository = this._repository;
+  var fail = { notfound: true };
+  var noVersioned = { versions : { latest: { hash: 'latest' } } };
+  var repository = this._repository;
 
-	return Q.Promise(function(resolve){
+  return Q.Promise(function(resolve){
 
-		Q.all([
-				repository.resolve(packageName),
-				repository.versions(packageName)
-			])
-			.spread(function(ConcreteResolver, versions){
+    Q.all([
+        repository.resolve(packageName),
+        repository.versions(packageName)
+      ])
+      .spread(function(ConcreteResolver, versions){
 
-				return [ConcreteResolver[0], versions];
+        return [ConcreteResolver[0], versions];
 
-			})
-			.spread(function(ConcreteResolver, versions){
+      })
+      .spread(function(ConcreteResolver, versions){
 
-				// No versioned endpoints
-				if(ConcreteResolver === resolvers.Fs)
-					return noVersioned;
+        // No versioned endpoints
+        if(ConcreteResolver === resolvers.Fs)
+          return noVersioned;
 
-				// Versioned endpoints
-				if(
-					ConcreteResolver === resolvers.GitRemote||
-					ConcreteResolver === resolvers.GitHub
-				) {
+        // Versioned endpoints
+        if(
+          ConcreteResolver === resolvers.GitRemote||
+          ConcreteResolver === resolvers.GitHub
+        ) {
 
-					var lookup = { versions : {} };
+          var lookup = { versions : {} };
 
-					mout.array.forEach(versions, function(version){
+          mout.array.forEach(versions, function(version){
 
-						lookup.versions[version] = { hash: version};
+            lookup.versions[version] = { hash: version};
 
-					});
+          });
 
-					return lookup;
+          return lookup;
 
-				}
+        }
 
-				return fail;
-			})
-			.then(resolve)
-			.catch(function(){
+        return fail;
+      })
+      .then(resolve)
+      .catch(function(){
 
-				resolve( fail );
+        resolve( fail );
 
-			});
-	});
+      });
+  });
 };
 
 BowerEndpoint.prototype.download = function (packageName, version, hash, meta, dir){
 
-	var ui = this._ui;
-	var registry = this._endpoint;
-	var repository = this._repository;
-	var bowerConfig = this._bower.config;
-	var bowerLogger = this._bower.logger;
+  var ui = this._ui;
+  var registry = this._endpoint;
+  var repository = this._repository;
+  var bowerConfig = this._bower.config;
+  var bowerLogger = this._bower.logger;
 
 
-	return Q.Promise(function(resolve, reject){
+  return Q.Promise(function(resolve, reject){
 
-		repository.resolve(packageName)
-			.spread(function(ConcreteResolver, source){
+    repository.resolve(packageName)
+      .spread(function(ConcreteResolver, source){
 
-				var decEndpoints = bowerEndpointParser.decompose(source + '#' + version);
-				var config = {};
-				mout.object.deepMixIn(config, bowerConfig);
-				config.cwd = dir;
-				config.directory = '';
+        var decEndpoints = bowerEndpointParser.decompose(source + '#' + version);
+        var config = {};
+        mout.object.deepMixIn(config, bowerConfig);
+        config.cwd = dir;
+        config.directory = '';
 
-				var project = new Project( config, bowerLogger);
-				return project.install([decEndpoints], undefined, config);
+        var project = new Project( config, bowerLogger);
+        return project.install([decEndpoints], undefined, config);
 
-			})
-			.then(function(installed){
+      })
+      .then(function(installed){
 
 
-				var pkg = mout.object.reduce(installed, function(pre, cur){
-					return cur;
-				});
+        var pkg = mout.object.reduce(installed, function(pre, cur){
+          return cur;
+        });
 
-				var packageJson = new PackageAdapter(pkg.pkgMeta, registry);
+        var packageJson = new PackageAdapter(pkg.pkgMeta, registry);
 
-				return packageJson;
-			})
-			.then(resolve)
-			.catch(resolve);
-	});
+        return packageJson;
+      })
+      .then(resolve)
+      .catch(resolve);
+  });
 };
 
 
